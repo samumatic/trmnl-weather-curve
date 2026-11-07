@@ -1,9 +1,9 @@
 {% assign dwd_fields = trmnl.plugin_settings.custom_fields_values %}
 {% assign dwd_lang = dwd_fields.language | default: "auto" | downcase %}
 {% assign dwd_units = dwd_fields.units | default: "celsius" | downcase %}
-{% if dwd_lang != "de" and dwd_lang != "en" %}
+{% if dwd_lang != "de" and dwd_lang != "en" and dwd_lang != "fr" %}
   {% assign dwd_locale = trmnl.user.locale | default: "en" | slice: 0, 2 | downcase %}
-  {% if dwd_locale == "de" %}{% assign dwd_lang = "de" %}{% else %}{% assign dwd_lang = "en" %}{% endif %}
+  {% if dwd_locale == "de" or dwd_locale == "fr" %}{% assign dwd_lang = dwd_locale %}{% else %}{% assign dwd_lang = "en" %}{% endif %}
 {% endif %}
 
 {% comment %} No forecast (API down or empty): a sleeping cloud and one of three lines, changing daily. {% endcomment %}
@@ -13,6 +13,12 @@
     {% when 0 %}{% assign dwd_empty_title = "Die Vorhersage hält ein Nickerchen" %}{% assign dwd_empty_text = "Der Wetterdienst antwortet gerade nicht. Bis die Vorhersage aufwacht, hilft ein Blick aus dem Fenster." %}
     {% when 1 %}{% assign dwd_empty_title = "Wetter nicht gefunden" %}{% assign dwd_empty_text = "Draußen ist es trotzdem. Beim nächsten Aktualisieren versuchen wir es wieder." %}
     {% else %}{% assign dwd_empty_title = "Wolken in der Leitung" %}{% assign dwd_empty_text = "Diesmal kam keine Vorhersage durch. Nächster Versuch beim nächsten Aktualisieren." %}
+  {% endcase %}
+{% elsif dwd_lang == "fr" %}
+  {% case dwd_joke %}
+    {% when 0 %}{% assign dwd_empty_title = "La météo fait la sieste" %}{% assign dwd_empty_text = "Le service météo ne répond pas pour l’instant. En attendant son réveil, la fenêtre fait aussi l’affaire." %}
+    {% when 1 %}{% assign dwd_empty_title = "Météo introuvable" %}{% assign dwd_empty_text = "Elle est pourtant toujours dehors. On réessaie à la prochaine actualisation." %}
+    {% else %}{% assign dwd_empty_title = "Des nuages dans le câble" %}{% assign dwd_empty_text = "Aucune prévision n’est passée cette fois. Nouvel essai à la prochaine actualisation." %}
   {% endcase %}
 {% else %}
   {% case dwd_joke %}
@@ -50,6 +56,7 @@
     lang: {{ dwd_lang | json }},
     fahrenheit: {% if dwd_units == "fahrenheit" %}true{% else %}false{% endif %},
     uv: {% if dwd_fields.show_uv == "true" %}true{% else %}false{% endif %},
+    wind: {% if dwd_fields.show_wind == "true" %}true{% else %}false{% endif %},
     name: {{ dwd_fields.location_name | strip | json }}
   };
 
@@ -143,6 +150,19 @@
         cond: { 'clear-day': 'Sunny', 'clear-night': 'Clear', 'partly-cloudy-day': 'Partly cloudy',
           'partly-cloudy-night': 'Partly cloudy', 'partly-cloudy-rain': 'Showers', 'cloudy': 'Cloudy', 'fog': 'Fog',
           'wind': 'Windy', 'rain': 'Rain', 'sleet': 'Sleet', 'snow': 'Snow', 'hail': 'Hail', 'thunderstorm': 'Thunderstorm' }
+      },
+      fr: {
+        days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+        daysLong: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'],
+        months: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+        monthsShort: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+        dateLong: function (d) { return this.daysLong[d.weekday] + ' ' + d.day + ' ' + this.months[d.month - 1]; },
+        dateShort: function (d) { return this.days[d.weekday] + ' ' + d.day + ' ' + this.monthsShort[d.month - 1]; },
+        high: 'MAX', low: 'MIN', rain: 'PLUIE', tomorrow: 'DEMAIN', legend: '100 % de risque de pluie',
+        updated: 'Mis à jour', title: 'Weather Curve',
+        cond: { 'clear-day': 'Ensoleillé', 'clear-night': 'Dégagé', 'partly-cloudy-day': 'Éclaircies',
+          'partly-cloudy-night': 'Éclaircies', 'partly-cloudy-rain': 'Averses', 'cloudy': 'Nuageux', 'fog': 'Brouillard',
+          'wind': 'Venteux', 'rain': 'Pluie', 'sleet': 'Pluie et neige', 'snow': 'Neige', 'hail': 'Grêle', 'thunderstorm': 'Orage' }
       }
     };
 
@@ -159,7 +179,10 @@
         days: D.days.map(function (d) {
           return { label: t.days[d.weekday], high: temp(d.high), low: temp(d.low), rain: d.rain, icon: d.icon, uv: d.uv };
         }),
-        now: { temp: temp(D.now.temp), icon: D.now.icon, text: t.cond[D.now.icon] || '' },
+        now: { temp: temp(D.now.temp), icon: D.now.icon, text: t.cond[D.now.icon] || '',
+          // Opt-in wind speed: km/h, mph with Fahrenheit; empty when off or unknown.
+          wind: C.wind && D.now.wind != null ? Math.round(C.fahrenheit ? D.now.wind * 0.621371 : D.now.wind) +
+            (C.fahrenheit ? ' mph' : ' km/h') : '' },
         station: C.name || D.station || (D.source === 'open-meteo' ? 'Open-Meteo' : ''),
         // Short data credit for Open-Meteo (CC BY 4.0): in the station slot when no name is set, else with the footer.
         credit: D.source === 'open-meteo' && (C.name || D.station) ? 'Open-Meteo' : '',
@@ -417,6 +440,11 @@
         icon(svg, D.now.icon, 223.0, 122.9, 2.068, 3.2);
         txt(svg, 24, 213, D.now.text, { size: 18, weight: 500 });
         stats(svg, [24, 104, 184], 249, 277, 22, t, [24, 90, 156, 222]);
+        // Opt-in wind, under the stats.
+        if (D.now.wind) {
+          icon(svg, 'wind', 34, 302, 0.85, 2);
+          txt(svg, 50, 309, D.now.wind, { size: 18, weight: 500 });
+        }
         rect(svg, 24, 335 + e, 232, 1);
         if (m) {
           txt(svg, 24, 359 + e, D.t.tomorrow + ' · ' + m.label.toUpperCase(), { size: 11, weight: 600, ls: 1 });

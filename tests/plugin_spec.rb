@@ -48,6 +48,25 @@ RSpec.describe 'Weather Curve (DWD)' do
     end
   end
 
+  # French labels are the longest ("100 % de risque de pluie"): every view and orientation still fits.
+  describe 'in French' do
+    let(:custom_fields) { { 'lat_lon' => '52.5200,13.4050', 'language' => 'fr', 'show_uv' => 'true' } }
+
+    %w[full half_horizontal half_vertical quadrant].each do |view|
+      it "draws the #{view} view" do
+        %w[og_plus v2].each do |device|
+          [nil, :portrait].each do |orientation|
+            args = { view:, device:, mocks:, custom_fields: }
+            args[:orientation] = orientation if orientation
+            screen = trmnl.render(**args)
+            expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+            expect(screen.text).to match(/MAX|Lun|Mar|Mer|Jeu|Ven|Sam|Dim/)
+          end
+        end
+      end
+    end
+  end
+
   # New York on Open-Meteo: every view, both source labels, the 7-day curve.
   context 'with Open-Meteo (New York)' do
     let(:custom_fields) { { 'lat_lon' => '40.7128,-74.0060' } }
@@ -153,8 +172,8 @@ RSpec.describe 'Weather Curve (DWD)' do
       end
     end
 
-    it 'shows UV in the designs with a stats block, in both languages' do
-      %w[en de].each do |language|
+    it 'shows UV in the designs with a stats block, in every language' do
+      %w[en de fr].each do |language|
         fields = berlin.merge('show_uv' => 'true', 'language' => language)
         %w[full half_vertical quadrant].each do |view|
           expect(trmnl.render(view:, device: 'og_plus', mocks: uv_mocks, custom_fields: fields).text).to match(/UV\d/)
@@ -190,6 +209,44 @@ RSpec.describe 'Weather Curve (DWD)' do
     end
   end
 
+  # Optional wind (show_wind): Bright Sky always sends it, Open-Meteo only when asked.
+  describe 'wind' do
+    let(:berlin) { { 'lat_lon' => '52.5200,13.4050' } }
+    let(:new_york) { { 'lat_lon' => '40.7128,-74.0060' } }
+
+    it 'asks Open-Meteo for the wind speed only when on' do
+      url = trmnl.transform(mocks:, custom_fields: new_york.merge('show_wind' => 'true')).requests.first[:url]
+      expect(url).to include('is_day,wind_speed_10m&current=temperature_2m,weather_code,is_day,wind_speed_10m&')
+      url = trmnl.transform(mocks:, custom_fields: new_york).requests.first[:url]
+      expect(url).not_to include('wind')
+    end
+
+    it 'reads the current wind speed from the DWD' do
+      expect(trmnl.transform(mocks:, custom_fields: berlin).data['now']['wind']).to be_a(Numeric)
+    end
+
+    it 'draws the wind in the full view only when on, in km/h or mph' do
+      on = trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields: berlin.merge('show_wind' => 'true'))
+      expect(on).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+      expect(on.text).to match(/\d+ km\/h/)
+      fahrenheit = berlin.merge('show_wind' => 'true', 'units' => 'fahrenheit')
+      expect(trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields: fahrenheit).text).to match(/\d+ mph/)
+      expect(trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields: berlin).text).not_to match(/km\/h/)
+    end
+
+    it 'draws no wind when Open-Meteo sent none' do
+      screen = trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields: new_york.merge('show_wind' => 'true'))
+      expect(screen).to have_no_problems
+      expect(screen.text).not_to match(/km\/h|null|NaN/)
+    end
+
+    it 'draws the TRMNL X design with wind and UV' do
+      fields = berlin.merge('show_wind' => 'true', 'show_uv' => 'true', 'language' => 'fr')
+      expect(trmnl.render(view: 'full', device: 'v2', mocks:, custom_fields: fields))
+        .to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+    end
+  end
+
   # A DWD station outside Europe has no rain fields at all: no rain is drawn, and no "0 %".
   context 'with a forecast without rain data' do
     let(:brightsky) do
@@ -208,7 +265,7 @@ RSpec.describe 'Weather Curve (DWD)' do
       it "draws the #{view} view without rain" do
         screen = trmnl.render(view:, device: 'og_plus', mocks:, custom_fields:)
         expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
-        expect(screen.text).not_to match(/REGEN|RAIN|chance of rain|null/i)
+        expect(screen.text).not_to match(/REGEN|RAIN|PLUIE|chance of rain|null/i)
       end
     end
 
