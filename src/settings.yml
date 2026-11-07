@@ -24,9 +24,9 @@ custom_fields:
 - keyname: location_name
   field_type: string
   name: Location name
-  description: Shown as the title, for example your city. Open-Meteo sends no place name, so set one here. Left empty, the title shows the nearest DWD station (Europe only).
-  description-de: Wird als Titel angezeigt, zum Beispiel deine Stadt. Open-Meteo liefert keinen Ortsnamen, also trag hier einen ein. Leer gelassen zeigt der Titel die nächste DWD-Station (nur in Europa).
-  description-fr: Affiché comme titre, par exemple votre ville. Open-Meteo ne fournit pas de nom de lieu, indiquez-en un ici. Laissé vide, le titre affiche la station DWD la plus proche (Europe uniquement).
+  description: 'Title on the screen. Empty: nearest DWD station (Europe only).'
+  description-de: 'Titel auf dem Bildschirm. Leer: nächste DWD-Station (nur in Europa).'
+  description-fr: 'Titre affiché à l''écran. Vide : station DWD la plus proche (Europe uniquement).'
   placeholder: New York
   optional: true
 - keyname: language
@@ -54,23 +54,23 @@ custom_fields:
 - keyname: show_uv
   field_type: boolean
   name: UV index
-  description: Shows today's UV index next to high, low and rain. In Europe this adds one small request to Open-Meteo.
-  description-de: Zeigt den UV-Index von heute neben Hoch, Tief und Regen. In Europa kommt dafür eine kleine Anfrage an Open-Meteo dazu.
-  description-fr: Affiche l'indice UV du jour à côté du max, du min et de la pluie. En Europe, cela ajoute une petite requête à Open-Meteo.
+  description: Shows today's UV index.
+  description-de: Zeigt den UV-Index von heute.
+  description-fr: Affiche l'indice UV du jour.
   default: false
 - keyname: show_name
   field_type: boolean
   name: Plugin name
-  description: Shows "Weather Curve" at the bottom left. Turn it off for a cleaner screen, for example in a mashup. The Open-Meteo credit stays either way.
-  description-de: Zeigt "Weather Curve" unten links. Ausschalten für einen ruhigeren Bildschirm, zum Beispiel in einem Mashup. Der Open-Meteo-Hinweis bleibt in jedem Fall.
-  description-fr: Affiche "Weather Curve" en bas à gauche. Désactivez-le pour un écran plus épuré, par exemple dans un mashup. La mention Open-Meteo reste affichée dans tous les cas.
+  description: Shows "Weather Curve" at the bottom left.
+  description-de: Zeigt "Weather Curve" unten links.
+  description-fr: Affiche "Weather Curve" en bas à gauche.
   default: true
 - keyname: data_source
   field_type: select
   name: Data source
-  description: Auto uses the DWD in Europe and Open-Meteo everywhere else. The DWD has no rain forecast for most stations outside Europe.
-  description-de: Auto nutzt in Europa den DWD und sonst Open-Meteo. Außerhalb Europas hat der DWD für die meisten Stationen keine Regenvorhersage.
-  description-fr: Auto utilise le DWD en Europe et Open-Meteo ailleurs. Hors d'Europe, le DWD n'a pas de prévision de pluie pour la plupart des stations.
+  description: 'Auto: DWD in Europe, Open-Meteo elsewhere. Outside Europe, the DWD mostly has no rain forecast.'
+  description-de: 'Auto: DWD in Europa, sonst Open-Meteo. Außerhalb Europas hat der DWD meist keine Regenvorhersage.'
+  description-fr: 'Auto : DWD en Europe, Open-Meteo ailleurs. Hors d''Europe, le DWD n''a le plus souvent pas de prévision de pluie.'
   options:
   - Auto: auto
   - DWD: dwd
