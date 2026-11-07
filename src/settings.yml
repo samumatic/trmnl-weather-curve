@@ -58,6 +58,12 @@ custom_fields:
   description-de: Zeigt den UV-Index von heute neben Hoch, Tief und Regen. In Europa kommt dafür eine kleine Anfrage an Open-Meteo dazu.
   description-fr: Affiche l'indice UV du jour à côté du max, du min et de la pluie. En Europe, cela ajoute une petite requête à Open-Meteo.
   default: false
+- keyname: show_name
+  field_type: boolean
+  name: Plugin name
+  description: Shows "Weather Curve" at the bottom left. Turn it off for a cleaner screen, for example in a mashup. The Open-Meteo credit stays either way.
+  description-de: Zeigt "Weather Curve" unten links. Ausschalten für einen ruhigeren Bildschirm, zum Beispiel in einem Mashup. Der Open-Meteo-Hinweis bleibt in jedem Fall.
+  default: true
 - keyname: data_source
   field_type: select
   name: Data source

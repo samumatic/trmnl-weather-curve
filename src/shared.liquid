@@ -56,6 +56,8 @@
     lang: {{ dwd_lang | json }},
     fahrenheit: {% if dwd_units == "fahrenheit" %}true{% else %}false{% endif %},
     uv: {% if dwd_fields.show_uv == "true" %}true{% else %}false{% endif %},
+    // On unless explicitly turned off, so existing installs keep the name.
+    showName: {% if dwd_fields.show_name == "false" %}false{% else %}true{% endif %},
     name: {{ dwd_fields.location_name | strip | json }}
   };
 
@@ -187,6 +189,8 @@
         updated: t.updated + ' ' + clock,
         // Opt-in UV index (Open-Meteo only); shown for today whenever it is known.
         uvOn: !!C.uv,
+        // Plugin name in the footer (setting "Plugin name"); off leaves only the credit and the update time.
+        showName: C.showName !== false,
         hasRain: D.days.some(function (d) { return d.rain != null; })
       };
     }
@@ -299,7 +303,8 @@
     }
     function footer(svg, x0, x1, ruleY, y, size) {
       rect(svg, x0, ruleY, x1 - x0, 1);
-      txt(svg, x0, y, V.t.title + (V.credit ? ' · ' + V.credit : ''), { size: size, weight: 500 });
+      var left = [V.showName ? V.t.title : '', V.credit].filter(Boolean).join(' · ');
+      if (left) txt(svg, x0, y, left, { size: size, weight: 500 });
       txt(svg, x1, y, V.updated, { size: size, weight: 500, anchor: 'end' });
     }
 

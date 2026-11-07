@@ -209,6 +209,48 @@ RSpec.describe 'Weather Curve (DWD)' do
     end
   end
 
+  # Plugin name in the footer (show_name): on by default, hidden when turned off; the Open-Meteo credit stays.
+  describe 'plugin name' do
+    let(:berlin) { { 'lat_lon' => '52.5200,13.4050' } }
+    let(:new_york) { { 'lat_lon' => '40.7128,-74.0060', 'location_name' => 'New York' } }
+
+    %w[full half_vertical quadrant].each do |view|
+      it "shows the name in the #{view} view when on, or never set" do
+        [{}, { 'show_name' => 'true' }].each do |extra|
+          screen = trmnl.render(view:, device: 'og_plus', mocks:, custom_fields: berlin.merge(extra))
+          expect(screen.text).to include('Weather Curve')
+        end
+      end
+
+      it "hides the name in the #{view} view when off" do
+        screen = trmnl.render(view:, device: 'og_plus', mocks:, custom_fields: berlin.merge('show_name' => 'false'))
+        expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+        expect(screen.text).not_to include('Weather Curve')
+      end
+
+      it "keeps the Open-Meteo credit in the #{view} view when the name is off" do
+        screen = trmnl.render(view:, device: 'og_plus', mocks:, custom_fields: new_york.merge('show_name' => 'false'))
+        expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+        expect(screen.text).not_to include('Weather Curve')
+        expect(screen.text).to include('Open-Meteo')
+      end
+    end
+
+    it 'hides the name in the TRMNL X and portrait designs' do
+      %w[og_plus v2].each do |device|
+        [nil, :portrait].each do |orientation|
+          %w[full half_vertical].each do |view|
+            args = { view:, device:, mocks:, custom_fields: berlin.merge('show_name' => 'false') }
+            args[:orientation] = orientation if orientation
+            screen = trmnl.render(**args)
+            expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+            expect(screen.text).not_to include('Weather Curve')
+          end
+        end
+      end
+    end
+  end
+
   # A DWD station outside Europe has no rain fields at all: no rain is drawn, and no "0 %".
   context 'with a forecast without rain data' do
     let(:brightsky) do
