@@ -63,6 +63,7 @@ custom_fields:
   name: Plugin name
   description: Shows "Weather Curve" at the bottom left. Turn it off for a cleaner screen, for example in a mashup. The Open-Meteo credit stays either way.
   description-de: Zeigt "Weather Curve" unten links. Ausschalten für einen ruhigeren Bildschirm, zum Beispiel in einem Mashup. Der Open-Meteo-Hinweis bleibt in jedem Fall.
+  description-fr: Affiche "Weather Curve" en bas à gauche. Désactivez-le pour un écran plus épuré, par exemple dans un mashup. La mention Open-Meteo reste affichée dans tous les cas.
   default: true
 - keyname: data_source
   field_type: select

@@ -65,6 +65,30 @@ RSpec.describe 'Weather Curve (DWD)' do
         end
       end
     end
+
+    # "Peu nuageux" (partly cloudy at night) is the longest French condition next to the current temperature.
+    context 'at night with some clouds' do
+      let(:brightsky) do
+        fixture('brightsky.json').tap { |data| data['weather'].each { it['icon'] = 'partly-cloudy-night' } }
+      end
+
+      %w[full half_horizontal half_vertical quadrant].each do |view|
+        it "fits the condition in the #{view} view" do
+          %w[og_plus v2].each do |device|
+            [nil, :portrait].each do |orientation|
+              args = { view:, device:, mocks:, custom_fields: }
+              args[:orientation] = orientation if orientation
+              screen = trmnl.render(**args)
+              expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+            end
+          end
+        end
+      end
+
+      it 'names the condition in the full view' do
+        expect(trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields:).text).to include('Peu nuageux')
+      end
+    end
   end
 
   # New York on Open-Meteo: every view, both source labels, the 7-day curve.
