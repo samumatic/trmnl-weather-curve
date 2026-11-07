@@ -23,6 +23,7 @@ A 7-day weather forecast for [TRMNL](https://trmnl.com) e-paper displays: one te
 - German or English labels (or follow the TRMNL account language)
 - Celsius or Fahrenheit (Fahrenheit also switches to a 12-hour clock)
 - Optional UV index for today, from Open-Meteo; off by default
+- Optional plugin name in the footer; on by default, turn it off for a cleaner mashup
 - Flat gray on grayscale screens, a dot pattern on black-and-white screens
 - All four TRMNL layouts (full, half horizontal, half vertical, quadrant), adapting to portrait and to TRMNL X
 
