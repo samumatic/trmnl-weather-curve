@@ -335,4 +335,55 @@ RSpec.describe 'Weather Curve (DWD)' do
       expect(design(screen)).to start_with('wide 800 ')
     end
   end
+
+  # Every view in slots of any shape (1:3 to 4:1, CSS or device pixels), whatever share of the screen the renderer
+  # reports: the design picked must fill at least 80 % of the slot's width or height (issue #5 filled 72 %).
+  # trmnlp has no mashups, so the layout picker (dwdPlan) is asked directly; the drawings below check real slots.
+  describe 'any slot shape' do
+    let(:sweep) do
+      <<~JS
+        (() => {
+          const bad = [];
+          for (const view of ['full', 'half_horizontal', 'half_vertical', 'quadrant'])
+            for (const w of [200, 300, 390, 520, 780, 1040, 1400, 1872])
+              for (let a = 0.3; a <= 4.0001; a += 0.05) {
+                const h = w / a;
+                for (const rw of [0, 0.25, 0.33, 0.5, 0.67, 0.9, 1])
+                  for (const rh of [0, 0.25, 0.33, 0.5, 0.6, 0.67, 0.8, 1]) {
+                    const [name, dw, dh] = dwdPlan(view, w, h, { w: rw, h: rh });
+                    const fill = Math.min(a / (dw / dh), (dw / dh) / a);
+                    if (fill < 0.8) bad.push(`${view} ${Math.round(w)}x${Math.round(h)} at ${rw}/${rh} of the screen: ` +
+                      `${name} ${Math.round(dw)}x${Math.round(dh)}, ${Math.round(fill * 100)} %`);
+                  }
+              }
+          return bad;
+        })()
+      JS
+    end
+
+    it 'fills at least 80 % of every slot shape in every view' do
+      bad = trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields:).evaluate(sweep)
+      expect(bad.first(20)).to eq([]), "#{bad.size} slot shapes letterboxed, e.g.:\n#{bad.first(20).join("\n")}"
+    end
+
+    # The same picks drawn: real TRMNL slot sizes, also with the slot reported as most of the screen.
+    {
+      'OG half horizontal' => ['half_horizontal', 'og_plus', 780, 225], 'OG half vertical' => ['half_vertical', 'og_plus', 385, 460],
+      'OG quadrant' => ['quadrant', 'og_plus', 385, 225], 'X half horizontal' => ['half_horizontal', 'v2', 1852, 675],
+      'X half vertical' => ['half_vertical', 'v2', 909, 1384], 'X quadrant' => ['quadrant', 'v2', 909, 675],
+      'custom flat row' => ['quadrant', 'v2', 1852, 450]
+    }.each do |name, (view, device, w, h)|
+      it "fills the #{name} slot, whatever share of the screen it reports" do
+        slot = "<style>.view { width: #{w}px !important; height: #{h}px !important; flex: none !important; }</style>"
+        [nil, ".screen { width: #{w}px !important; height: #{h}px !important; }"].each do |screen_css|
+          head = screen_css ? slot.sub('</style>', "#{screen_css}</style>") : slot
+          screen = trmnl.render(view:, device:, mocks:, custom_fields:, head:)
+          expect(screen).to have_no_problems.and(have_no_leaked_text).and(have_no_overlapping_text)
+          _, dw, dh = screen.evaluate("document.querySelector('svg[data-dwd-view]').getAttribute('data-drawn')").split.map(&:to_f)
+          fill = [w.fdiv(h) / dw.fdiv(dh), dw.fdiv(dh) / w.fdiv(h)].min
+          expect(fill).to be >= 0.8, "#{name} #{screen_css ? 'as the whole screen' : ''}: #{dw}x#{dh} in #{w}x#{h}"
+        end
+      end
+    end
+  end
 end

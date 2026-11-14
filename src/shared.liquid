@@ -554,10 +554,12 @@
       // Only up to 5:2, the widest the full design gets (1200 x 480): flatter slots (half horizontal, also in
       // mashups whose screen size the renderer reports differently) keep the wide design instead of a letterbox.
       if (aspect >= 1.8 && aspect <= 2.5 && rel.w >= 0.9 && rel.h >= 0.6) return ['full', 480 * aspect, 480];
-      if (view === 'full' && aspect >= 1.2) return ['full', 800, clamp(800 / aspect, 480, 680)];
+      // 2:1 and flatter, in any view (half horizontal, or a flat custom mashup cell): today plus a compact curve.
+      if (aspect >= 2) return ['wide', 800, clamp(800 / aspect, 240, 400)];
+      // Down to square: the list design (400 x 480) would fill less of the slot than the full one.
+      if (view === 'full' && aspect >= 1) return ['full', 800, clamp(800 / aspect, 480, 680)];
       if (view === 'full' && 400 / aspect >= TALL) return ['column', 400, clamp(400 / aspect, TALL, 1400)];
       if (view === 'full' && 400 / aspect >= 520) return ['portrait', 400, clamp(400 / aspect, 520, 1400)];
-      if (view === 'half_horizontal' && aspect >= 2) return ['wide', 800, clamp(800 / aspect, 240, 400)];
       // A large half slot (TRMNL X in portrait) has room for the full design.
       if (view === 'half_horizontal' && aspect >= 1.2 && w >= 700) return ['full', 800, clamp(800 / aspect, 480, 680)];
       if (view !== 'full' && aspect >= 1) return ['quadrant', 400, clamp(400 / aspect, 240, 340)];
@@ -566,6 +568,8 @@
       if (400 / aspect > 760) return ['portrait', 400, clamp(400 / aspect, 520, 1400)];
       return ['list', 400, clamp(400 / aspect, 480, 760)];
     }
+    // For the tests, which try every slot shape without drawing each one.
+    window.dwdPlan = plan;
 
     function whenFonts(cb) {
       var done = false, go = function () { if (!done) { done = true; cb(); } };
