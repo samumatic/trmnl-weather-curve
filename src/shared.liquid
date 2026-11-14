@@ -551,7 +551,9 @@
       // A slot as wide as the screen, at least two thirds of its height and wider than 9:5 (a merged cell of a
       // custom 3x3 mashup on TRMNL X, or a wide screen): the full design, widened instead of letterboxed.
       // Relative sizes, since a slot's pixels are CSS pixels on some renderers and device pixels on others.
-      if (aspect >= 1.8 && rel.w >= 0.9 && rel.h >= 0.6) return ['full', Math.min(480 * aspect, 1200), 480];
+      // Only up to 5:2, the widest the full design gets (1200 x 480): flatter slots (half horizontal, also in
+      // mashups whose screen size the renderer reports differently) keep the wide design instead of a letterbox.
+      if (aspect >= 1.8 && aspect <= 2.5 && rel.w >= 0.9 && rel.h >= 0.6) return ['full', 480 * aspect, 480];
       if (view === 'full' && aspect >= 1.2) return ['full', 800, clamp(800 / aspect, 480, 680)];
       if (view === 'full' && 400 / aspect >= TALL) return ['column', 400, clamp(400 / aspect, TALL, 1400)];
       if (view === 'full' && 400 / aspect >= 520) return ['portrait', 400, clamp(400 / aspect, 520, 1400)];

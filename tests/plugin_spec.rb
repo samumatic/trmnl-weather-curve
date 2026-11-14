@@ -326,5 +326,13 @@ RSpec.describe 'Weather Curve (DWD)' do
       expect(design(trmnl.render(view: 'full', device: 'og_plus', mocks:, custom_fields:))).to eq('full 800 480')
       expect(design(trmnl.render(view: 'full', device: 'v2', mocks:, custom_fields:))).to eq('full 800 600')
     end
+
+    # Issue #5: a TRMNL OG mashup's half horizontal slot measured over 0.6 of the screen height and got the
+    # full design letterboxed (1200 x 480 in a 780 x 300 slot). Flatter than 5:2 is never widened.
+    it 'keeps the wide design in a flat half horizontal slot on TRMNL OG' do
+      flat = '<style>.view { height: 300px !important; width: 100% !important; flex: none !important; }</style>'
+      screen = trmnl.render(view: 'half_horizontal', device: 'og_plus', mocks:, custom_fields:, head: flat)
+      expect(design(screen)).to start_with('wide 800 ')
+    end
   end
 end
